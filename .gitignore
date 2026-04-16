@@ -1,0 +1,16 @@
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+
+# Runtime data and local backups
+data/
+*.log
+*.bak
+*.tmp
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
