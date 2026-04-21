@@ -8,11 +8,44 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
   redis:
     image: redis:7
     restart: unless-stopped
+    volumes:
+      - /mnt/ssd/nextcloud-data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 
   nextcloud:
     image: nextcloud:apache
     restart: unless-stopped
+    ports:
+      - "${NEXTCLOUD_PORT}:80"
+    environment:
+      POSTGRES_DB: ${NEXTCLOUD_DB_NAME}
+      POSTGRES_USER: ${NEXTCLOUD_DB_USER}
+      POSTGRES_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
+      POSTGRES_HOST: ${NEXTCLOUD_DB_HOST}
+      REDIS_HOST: ${REDIS_HOST}
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
+    volumes:
+      - /mnt/ssd/nextcloud-data/nextcloud/config:/var/www/html/config
+      - /mnt/ssd/nextcloud-data/nextcloud/data:/var/www/html/data
+      - /mnt/ssd/nextcloud-data/nextcloud/custom_apps:/var/www/html/custom_apps
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
